@@ -7,7 +7,7 @@ const port = process.env.PORT || 8080
 
 app.get('/', (req, res) => {
   res.json({status: 200,
-message: "Entorno en linea"})
+message: "Entorno en linea, version 2"})
 })
 
 app.listen(port, () => {
