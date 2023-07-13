@@ -9,7 +9,7 @@ on:
 
 jobs:
 
-  build:
+  EC2-Deploy:
 
     runs-on: self-hosted
 
