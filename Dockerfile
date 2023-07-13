@@ -4,10 +4,8 @@ FROM node:16
 WORKDIR /usr/scr/app
 
 # Install app dependencies
-
 COPY package*.json ./
-
-RUN npm Install
+RUN npm install
 
 # Bundle app source
 COPY . .
