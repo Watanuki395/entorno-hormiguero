@@ -8,3 +8,4 @@ enemigos, y terrenos. El subsistema de Generación de Entorno no estará encarga
 de la asignación directa de hormigas, ya que esta función corresponderá a cada
 subsistema individual y su interfaz con el módulo de Hormiga Reina. Este subsistema expondrá una
 API para la configuración y acceso a los diferentes elementos del entorno
+1
