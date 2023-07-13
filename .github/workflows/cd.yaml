@@ -7,9 +7,10 @@ on:
     types: 
       - completed
 
-
 jobs:
+
   build:
+
     runs-on: self-hosted
 
     steps: 
