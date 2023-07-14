@@ -17,12 +17,11 @@ message: "🌱🐜🐜🐜🐜 Entorno en linea 🐜🐜🐜🐜"})
 
 app.use("/api/entorno", require("./routes/entorno"));
 
-const uri =
-  "mongodb+srv://mongouser1:Watanagashi396@clustertestgraphql.s9v2f.mongodb.net/?retryWrites=true&w=majority";
+const URI = process.env.MONGODB_URI;
 
 async function connect() {
   try {
-    await mongoose.connect(uri);
+    await mongoose.connect(URI);
     console.log("Connected to MongoDB");
   } catch (error) {
     console.error(error);
