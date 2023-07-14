@@ -3,9 +3,11 @@
 
 const getAllEntorno = async (req, res) => {
     try {
-        res.send({ msg: 'Este es tu entorno 🌱' })
+        res.json({status: 200,
+            message: "🌱Estas son tus hormigas 🐜🐜🐜🐜"})
     } catch (e) {
-        res.send({ error: 'Esto fue un error de entorno' })
+        res.json({status: 404,
+            message: "Error 🐜🐜🐜🐜"})
     }
 }
 
