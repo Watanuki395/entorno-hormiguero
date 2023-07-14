@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
 message: "🌱🐜🐜🐜🐜 Entorno en linea 🐜🐜🐜🐜"})
 })
 
-app.use("/api/entorno", require("./routes/entorno"));
+app.use("/api/entorno/", require("./routes/entorno"));
 
 const URI = process.env.MONGODB_URI;
 
