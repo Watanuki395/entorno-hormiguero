@@ -1,5 +1,4 @@
-//const { httpError } = require('../helpers/handleError')
-//var db = require("../models");
+const Entorno = require('../models/Enemy')
 
 const getAllEntorno = async (req, res) => {
     try {
@@ -10,6 +9,7 @@ const getAllEntorno = async (req, res) => {
             message: "Error 🐜🐜🐜🐜"})
     }
 }
+
 
 
 module.exports = { getAllEntorno }
