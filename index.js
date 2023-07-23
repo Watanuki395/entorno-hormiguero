@@ -12,6 +12,7 @@ app.use(express.json());
 
 const { createEnemy } = require("./controllers/enemyController");
 const { createFood } = require("./controllers/foodController");
+const { generateInitialEnvironment } = require("./controllers/entornoController");
 
 app.get("/", (req, res) => {
   res.json({ status: 200, message: "🌱🐜🐜🐜🐜 Entorno en linea 🐜🐜🐜🐜" });
@@ -40,6 +41,7 @@ app.listen(PORT, () => {
 mongoose.connection.once("open", () => {
   createEnemy();
   createFood();
+  generateInitialEnvironment();
 });
 
 
