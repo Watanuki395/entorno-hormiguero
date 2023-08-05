@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hormiguero</title>
+  <style>
+    /* Estilos para el contenedor del canvas */
+    #canvas-container {
+      display: inline-block;
+      margin-right: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="canvas-container">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div>
+    <!-- Aquí puedes agregar los elementos de configuración del entorno -->
+    <!-- ... -->
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <script>
+    // Lógica para la interacción con alimentos y enemigos
+    // Aquí puedes utilizar p5.js para crear animaciones y gráficos interactivos
+    function setup() {
+    const canvas = createCanvas(600, 400);
+    canvas.parent('canvas-container');
+
+    // Obtén los datos de alimentos y enemigos desde las variables pasadas desde el servidor
+    const environmentData = <%= unescape(JSON.stringify(environmentData)) %>;
+    const decodedData = JSON.parse(decodeURIComponent(environmentData));
+    console.log(decodedData);
+
+
+
+    // Tu lógica para dibujar y animar los elementos aquí
+    // ...
+
+    // Ejemplo de dibujar los elementos de alimentos y enemigos
+    fill(255, 0, 0); // Rojo para los alimentos
+    fill(0, 0, 255); // Azul para los enemigos
+    for (const item of environmentData) {
+      if (item.type === "food") {
+        ellipse(item.x, item.y, 20, 20);
+      } else if (item.type === "enemy") {
+        rect(item.x, item.y, 30, 30);
+      }
+    }
+  }
+    // ...
+  </script>
+</body>
+
+</html>

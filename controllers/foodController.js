@@ -1,24 +1,26 @@
 const Food = require("../models/Food");
+const { getRandomInt, getDificultyRange } = require("../helpers/helpers");
 
 // Función para borrar todos los enemigos existentes de la base de datos
 async function deleteExistingFoods() {
   try {
     await Food.deleteMany({});
-    console.log("Datos de alimentos existentes eliminados con éxito.");
+    console.log("Datos de alimentos existentes eliminados con éxito. 🗑️🍎");
   } catch (error) {
     console.error("Error al eliminar datos de alimentos existentes:", error);
   }
 }
 
-const createFood = async () => {
+const createFood = async (eMode,  isNew=false) => {
   try {
-    const foodData = generateFoods();
+    
     const countFoods = await Food.countDocuments();
 
-    if (countFoods <= 0) {
+    if (isNew || countFoods === 0) {
+      const foodData = generateFoods(eMode);
       await deleteExistingFoods();
       await Food.insertMany(foodData);
-      console.log("Datos de alimentos insertados con éxito.");
+      console.log("Datos de alimentos insertados con éxito. 🍎");
     } else {
       console.log("Los alimentos ya existen 🍎");
     }
@@ -27,19 +29,17 @@ const createFood = async () => {
   }
 };
 
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function generateFoods() {
+function generateFoods(eMode) {
+  let antsRequired = getDificultyRange(eMode);
   const foodsData = antFoods.map((food) => ({
     type: food.type,
     name: food.name,
     details: food.details,
-    foodValue: getRandomInt(2, 5), //TODO: food value deberia depender de la cantidad de hormigas necesarias para recolectar el alimento
-    antsRequired: getRandomInt(2, 11),
+    foodValue: getRandomInt(2, 8), 
+    antsRequired: getRandomInt(antsRequired.min, antsRequired.max),
     timeRequired: getRandomInt(5000, 25000),
     recollected: false,
+    assigned: false
   }));
 
   return foodsData;

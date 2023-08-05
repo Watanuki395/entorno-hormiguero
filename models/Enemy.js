@@ -21,6 +21,10 @@ const enemySchema = new mongoose.Schema({
     type: Boolean,
     required: true,
   },
+  assigned: {
+    type: Boolean,
+    required: true,
+  }
 });
 
 module.exports = new mongoose.model("Enemy", enemySchema);

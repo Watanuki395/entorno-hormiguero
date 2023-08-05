@@ -1,24 +1,25 @@
 const Enemy = require("../models/Enemy");
+const { getRandomInt, getDificultyRange } = require("../helpers/helpers");
 
 // Función para borrar todos los enemigos existentes de la base de datos
 async function deleteExistingEnemies() {
   try {
     await Enemy.deleteMany({});
-    console.log("Datos de enemigos existentes eliminados con éxito.");
+    console.log("Datos de enemigos existentes eliminados con éxito. 🗑️🐜");
   } catch (error) {
     console.error("Error al eliminar datos de enemigos existentes:", error);
   }
 }
 
-const createEnemy = async () => {
+const createEnemy = async (eMode,  isNew=false) => {
   try {
-    const enemiesData = generateEnemies();
     const countEnemies = await Enemy.countDocuments();
 
-    if (countEnemies <= 0) {
+    if (isNew || countEnemies === 0) {
+      const enemiesData = generateEnemies(eMode);
       await deleteExistingEnemies();
       await Enemy.insertMany(enemiesData);
-      console.log("Datos de enemigos insertados con éxito.");
+      console.log("Enemigos creados con éxito. 🐛");
     } else {
       console.log("Los enemigos ya existen 🐛");
     }
@@ -27,17 +28,15 @@ const createEnemy = async () => {
   }
 };
 
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function generateEnemies() {
+function generateEnemies(eMode) {
+  let antsRequired = getDificultyRange(eMode);
   const enemiesData = antEnemies.map((insect) => ({
     type: insect.type,
     name: insect.name,
-    antsRequired: getRandomInt(1, 7),
+    antsRequired: getRandomInt(antsRequired.min, antsRequired.max),
     timeRequired: getRandomInt(5000, 15000),
     defeated: false,
+    assigned: false
   }));
 
   return enemiesData;
