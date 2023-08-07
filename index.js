@@ -21,14 +21,7 @@ const Environment = require("./models/Environment");
 
 app.get("/", async (req, res) => {
   try {
-    // Lógica para obtener los datos de alimentos y enemigos desde tu base de datos
-    let response = await Environment.find();
-    const environmentData = response[0].data;
-    const mode = response[0].mode;
-    const antCost = response[0].antCost;
-    const environmentType = response[0].environmentType;
-
-    res.render("environment", { environmentData, mode, antCost, environmentType });
+    res.render("environment");
   } catch (error) {
     console.error("Error al obtener datos de alimentos y enemigos:", error);
     res.status(500).send("Error en el servidor");

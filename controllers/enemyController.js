@@ -64,7 +64,7 @@ const antEnemies = [
     name: "Araña Venenosa",
   },
   {
-    type: "Libélula",
+    type: "enemy",
     name: "Libélula Plateada",
   },
   {
