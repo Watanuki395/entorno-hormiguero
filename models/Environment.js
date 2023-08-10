@@ -17,7 +17,11 @@ const environmentSchema = new mongoose.Schema({
   environmentType: {
     type: String,
     required: true,
+  },
+  isActive: {
+    type: Boolean,
+    required: true,
   }
-});
+},{timestamps:true});
 
 module.exports = new mongoose.model("Environment", environmentSchema);
