@@ -4,6 +4,9 @@ const http = require("http");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger'); 
+
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -14,8 +17,6 @@ app.use(express.json());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-const { createEnemy } = require("./controllers/enemyController");
-const { createFood } = require("./controllers/foodController");
 const { createEnvironment, getEnvironment } = require("./controllers/environmentController");
 const Environment = require("./models/Environment");
 
@@ -28,7 +29,12 @@ app.get("/", async (req, res) => {
   }
 });
 
+// Environment
 app.use("/api/environment/", require("./routes/environment"));
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 
 const URI = process.env.MONGODB_URI;
 
