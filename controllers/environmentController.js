@@ -89,11 +89,8 @@ async function createEnvironment(eMode, environmentType) {
 
 
     // Crea objetos de comida y enemigos usando el _id del entorno
-    await createFood(eMode, savedEnvironment._id);
-    await createEnemy(eMode, savedEnvironment._id)
-
-    const allEnemies = await Enemy.find();
-    const allFoods = await Food.find();
+    const allEnemies = await createFood(eMode, savedEnvironment._id)
+    const allFoods = await createEnemy(eMode, savedEnvironment._id)
 
     // Crear un solo array con todos los datos de alimentos y enemigos
     const allData = [...allEnemies, ...allFoods];
@@ -218,7 +215,7 @@ async function updateAssignedObjects(req, res) {
     if (!targetObject.assigned) {
       return res.status(400).json({ message: 'El objeto no está asignado.' });
     }
-    
+
     if (targetObject.completed) {
       return res.status(400).json({ message: 'El objeto ya ha sido completado.' });
     }

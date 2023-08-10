@@ -14,8 +14,9 @@ async function deleteExistingEnemies() {
 const createEnemy = async (eMode, environmentId) => {
   try {
       const enemiesData = generateEnemies(eMode, environmentId);
-      await Enemy.insertMany(enemiesData);
+      const createdEnemies = await Enemy.insertMany(enemiesData);
       console.log("Enemigos creados con éxito. 🐛");
+      return createdEnemies;
   } catch (error) {
     console.error("Error al insertar los datos de enemigos:", error);
   }

@@ -14,8 +14,9 @@ async function deleteExistingFoods() {
 const createFood = async (eMode, environmentId) => {
   try {
       const foodData = generateFoods(eMode, environmentId);
-      await Food.insertMany(foodData);
+      const createdFoods = await Food.insertMany(foodData);
       console.log("Datos de alimentos insertados con éxito. 🍎");
+      return createdFoods;
   } catch (error) {
     console.error("Error al insertar los datos de alimentos:", error);
   }
