@@ -49,9 +49,7 @@ app.listen(PORT, () => {
 
 
 mongoose.connection.once("open", () => {
-  createEnemy();
-  createFood();
-  createEnvironment();
+  createEnvironment('medium', 'desert');
 });
 
 

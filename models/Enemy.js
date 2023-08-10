@@ -17,14 +17,19 @@ const enemySchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  defeated: {
+  completed: {
     type: Boolean,
     required: true,
   },
   assigned: {
     type: Boolean,
     required: true,
+  },
+  enviroment:{
+    type: mongoose.Types.ObjectId,
+    ref: "Environment",
+    required: true
   }
-});
+}, {timestamps:true});
 
 module.exports = new mongoose.model("Enemy", enemySchema);

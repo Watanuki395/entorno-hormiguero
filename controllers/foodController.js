@@ -11,25 +11,17 @@ async function deleteExistingFoods() {
   }
 }
 
-const createFood = async (eMode,  isNew=false) => {
+const createFood = async (eMode, environmentId) => {
   try {
-    
-    const countFoods = await Food.countDocuments();
-
-    if (isNew || countFoods === 0) {
-      const foodData = generateFoods(eMode);
-      await deleteExistingFoods();
+      const foodData = generateFoods(eMode, environmentId);
       await Food.insertMany(foodData);
       console.log("Datos de alimentos insertados con éxito. 🍎");
-    } else {
-      console.log("Los alimentos ya existen 🍎");
-    }
   } catch (error) {
     console.error("Error al insertar los datos de alimentos:", error);
   }
 };
 
-function generateFoods(eMode) {
+function generateFoods(eMode, environmentId) {
   let antsRequired = getDificultyRange(eMode);
   const foodsData = antFoods.map((food) => ({
     type: food.type,
@@ -38,8 +30,9 @@ function generateFoods(eMode) {
     foodValue: getRandomInt(2, 8), 
     antsRequired: getRandomInt(antsRequired.min, antsRequired.max),
     timeRequired: getRandomInt(5000, 25000),
-    recollected: false,
-    assigned: false
+    completed: false,
+    assigned: false,
+    enviroment: environmentId
   }));
 
   return foodsData;

@@ -11,32 +11,26 @@ async function deleteExistingEnemies() {
   }
 }
 
-const createEnemy = async (eMode,  isNew=false) => {
+const createEnemy = async (eMode, environmentId) => {
   try {
-    const countEnemies = await Enemy.countDocuments();
-
-    if (isNew || countEnemies === 0) {
-      const enemiesData = generateEnemies(eMode);
-      await deleteExistingEnemies();
+      const enemiesData = generateEnemies(eMode, environmentId);
       await Enemy.insertMany(enemiesData);
       console.log("Enemigos creados con éxito. 🐛");
-    } else {
-      console.log("Los enemigos ya existen 🐛");
-    }
   } catch (error) {
     console.error("Error al insertar los datos de enemigos:", error);
   }
 };
 
-function generateEnemies(eMode) {
+function generateEnemies(eMode, environmentId) {
   let antsRequired = getDificultyRange(eMode);
   const enemiesData = antEnemies.map((insect) => ({
     type: insect.type,
     name: insect.name,
     antsRequired: getRandomInt(antsRequired.min, antsRequired.max),
     timeRequired: getRandomInt(5000, 15000),
-    defeated: false,
-    assigned: false
+    completed: false,
+    assigned: false,
+    enviroment: environmentId
   }));
 
   return enemiesData;
