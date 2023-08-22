@@ -11,7 +11,9 @@ const swaggerSpec = require('./swagger');
 
 const app = express();
 const httpServer = http.createServer(app);
-const io = new Server(httpServer, { /* options */ });
+const io = new Server(httpServer, { cors: {
+  origin: "*"
+} });
 const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
