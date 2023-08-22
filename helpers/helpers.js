@@ -16,7 +16,7 @@ function getDificultyRange(eMode) {
       break;
     case "hard":
       min = 8;
-      max = 11;
+      max = 10;
       break;
     default:
       min = 4;

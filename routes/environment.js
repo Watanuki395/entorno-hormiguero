@@ -230,6 +230,58 @@ router.get('/ant-cost', getAntCost )
 
 router.patch('/update-task', updateAssignedObjects);
 
+
+
+/**
+ * @swagger
+ * /api/environment/update-task:
+ *   put:
+ *     summary: Marcar un objeto asignado como completado en el entorno activo para DEFENSA
+ *     tags: [Proyecto]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               assignedObjectId:
+ *                 type: string
+ *                 description: ID del objeto asignado.
+ *                 example: 64d4642083dd3ba1ee4cc532
+ *     responses:
+ *       200:
+ *         description: OK. Retorna el objeto actualizado con estado completado.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   description: ID del objeto.
+ *                   example: 64d4642083dd3ba1ee4cc532
+ *                 type:
+ *                   type: string
+ *                   description: Tipo del objeto (food o enemy).
+ *                   example: food
+ *                 name:
+ *                   type: string
+ *                   description: Nombre del objeto.
+ *                   example: Manzana
+ *                 state:
+ *                   type: string
+ *                   description: Estado del objeto (collected o defeated).
+ *                   example: collected
+ *       400:
+ *         description: El objeto ya ha sido completado o no se encuentra en el entorno activo.
+ *       404:
+ *         description: No hay objetos asignados disponibles o no se encuentra un entorno activo.
+ *       500:
+ *         description: Error al marcar el objeto como completado.
+ */
+router.put('/update-task', updateAssignedObjects);
+
 /**
  * @swagger
  * /api/environment/new:

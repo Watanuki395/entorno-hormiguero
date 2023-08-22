@@ -79,6 +79,24 @@
     align-items: center;
     z-index: 9999;
   }
+  .btn-danger {
+      background-color: #dc3545;
+      border-color: #dc3545;
+    }
+  .buttons-row{
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    padding-bottom: 1rem;
+  }
+  .form-options{
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    align-items: center;
+    justify-content: space-between;
+    align-content: flex-end;
+  }
   </style>
 </head>
 <body>
@@ -87,25 +105,28 @@
 
     <!-- Formulario con estilos de Bootstrap -->
     <form id="createEnvironmentForm">
-      <div class="form-colunm">
+      <div class="form-options">
         <div class="form-group col-md-4">
           <label for="eMode">Modo:</label>
           <select id="eMode" name="eMode" class="form-control">
+            <option value="" disabled selected>Selecciona la dificultad</option>
             <option value="easy">Fácil</option>
-            <option value="medium" selected>Medio</option>
+            <option value="medium">Medio</option>
             <option value="hard">Difícil</option>
           </select>
         </div>
         <div class="form-group col-md-4">
           <label for="environmentType">Tipo de entorno:</label>
           <select id="environmentType" name="environmentType" class="form-control">
-            <option value="jungle" selected>Jungla</option>
+            <option value="" disabled selected>Selecciona el tipo de entorno</option>
+            <option value="jungle">Jungla</option>
             <option value="desert">Desierto</option>
-            <option value="snow">Otro</option>
+            <option value="snow">Nieve</option>
           </select>
         </div>
-        <div class="form-group col-md-4">
-          <button type="button" id="createEnvironmentButton" class="btn btn-primary btn-block">Crear Nuevo Entorno</button>
+        <div class="buttons-row">
+          <button type="button" id="createEnvironmentButton" class="btn btn-primary">Crear Nuevo Entorno</button>
+          <button type="button" id="deleteEnvironmentButton" class="btn btn-danger">Desactivar Entorno</button>
         </div>
       </div>
     </form>
@@ -116,11 +137,35 @@
         </div>
       </div>
   </div>
+  <!-- Modal de confirmación de borrado -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirmación de Borrado</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro de que quieres borrar el entorno activo?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteButton">Borrar</button>
+      </div>
+    </div>
+  </div>
+</div>
   <!-- Agregar referencia a P5.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <!-- Agregar referencia a Bootstrap -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Agregamos socked.io-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
   <script>
+    const socket = io("http://localhost:8080/"); 
+
     let environmentData;
       function showLoadingSpinner() {
         loadingSpinner.classList.remove('d-none');
@@ -131,74 +176,83 @@
         loadingSpinner.classList.add('d-none');
       }
 
-    function setup() {
-      createCanvas(1000, 600);
-      //fetchEnvironmentData();
-      noLoop(); // Evita que draw se ejecute automáticamente
-      showLoadingSpinner(); // Muestra el spinner de carga
+      function setup() {
+        createCanvas(1000, 600);
+        //fetchEnvironmentData();
+        noLoop(); // Evita que draw se ejecute automáticamente
+        showLoadingSpinner(); // Muestra el spinner de carga
 
-      // Carga los datos del entorno y luego dibuja el canvas
-      fetchEnvironmentData().then(() => {
-        hideLoadingSpinner(); // Oculta el spinner de carga
-        redraw(); // Vuelve a dibujar el canvas con los datos cargados
-      });
+        // Carga los datos del entorno y luego dibuja el canvas
+        fetchEnvironmentData().then(() => {
+          hideLoadingSpinner(); // Oculta el spinner de carga
+          redraw(); // Vuelve a dibujar el canvas con los datos cargados
+        });
 
-    }
+      }
 
-    async function fetchEnvironmentData() {
-      const response = await fetch('/api/environment/full');
-      const data = await response.json();
-      environmentData = data.environment.data;
-      environmentType = data.environment.environmentType;
-    }
+      async function fetchEnvironmentData() {
+        const response = await fetch('/api/environment/full');
+        const data = await response.json();
+        environmentData = data.environment.data;
+        environmentType = data.environment.environmentType;
+      }
 
-    function draw() {
-        background(220);
+      function draw() {
+          background(220);
 
-        if (environmentData) {
-        const rows = 3; // Number of rows
-        const cols = Math.ceil(environmentData.length / rows); // Number of columns
+          if (environmentData) {
+          const rows = 3; // Number of rows
+          const cols = Math.ceil(environmentData.length / rows); // Number of columns
 
-        const elementSize = 40;
-        const paddingX = (width - cols * elementSize) / (cols - 1 );
-        const paddingY = (height - rows * elementSize) / (rows + 1);
+          const elementSize = 40;
+          const paddingX = (width - cols * elementSize) / (cols - 1 );
+          const paddingY = (height - rows * elementSize) / (rows + 1);
 
-        let index = 0;
-        // Set canvas background color based on environmentType
-        if (environmentType === 'jungle') {
-              background(97, 194, 86); // Green color for jungle environment
-            } else if (environmentType === 'desert') {
-              background(255, 228, 181); // Peach color for desert environment
-            } else {
-              background(220); // Default background color
-            }
+          let index = 0;
+          // Set canvas background color based on environmentType
+          if (environmentType === 'jungle') {
+                background(97, 194, 86); // Green color for jungle environment
+              } else if (environmentType === 'desert') {
+                background(255, 228, 181); // Peach color for desert environment
+              } else if( environmentType === 'snow'){
+                background(220); // Default background color
+              }
 
-        for (let row = 0; row < rows; row++) {
-          for (let col = 0; col < cols; col++) {
-            if (index < environmentData.length) {
-              const x = paddingX * (col + 1) + col * elementSize;
-              const y = paddingY * (row + 1) + row * elementSize;
-              drawElement(x, y, environmentData[index]);
-              index++;
+          for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+              if (index < environmentData.length) {
+                const x = paddingX * (col + 1) + col * elementSize;
+                const y = paddingY * (row + 1) + row * elementSize;
+                drawElement(x, y, environmentData[index]);
+                index++;
+              }
             }
           }
         }
       }
-    }
 
-    function drawElement(x, y, element) {
-          fill(255);
-          if (element.type === 'enemy') {
-            fill(255, 0, 0); // Red color for enemies
-          } else if (element.type === 'food') {
-            fill(0, 255, 0); // Green color for food
-          }
+      function drawElement(x, y, element) {
+            fill(255);
+            if (element.type === 'enemy' && !element.completed) {
+              fill(128, 0, 0); // Red color for enemies
+            } else if (element.type === 'food' && !element.completed) {
+              fill(0, 128, 0); // Green color for food
+            }
+            if(!element.completed && element.assigned){fill(243, 156, 18); } //Orange for Assigned elements
+            if(element.completed && element.assigned){fill(192, 192, 192); } // Grey for completed elements, it means it is recollected or defeated
 
-          ellipse(x, y, 40, 40); // Draw a simple circle for each element
-          textAlign(CENTER, CENTER);
-          fill(0);
-          text(element.name, x, y + 30); // Display the name below the circle
-      }
+            ellipse(x, y, 40, 40); // Draw a simple circle for each element
+            textAlign(CENTER, CENTER);
+            fill(130,0,0);
+            text(element.name, x, y + 30); // Display the name below the circle
+        }
+    
+      socket.on('update', (data) => {
+        console.log('Se ha recibido una actualización:', data);
+        
+          // Redibujar el canvas llamando a la función redraw()
+          setup()
+      });
   </script>
   
   <script>
@@ -230,6 +284,45 @@
       loadingSpinner.classList.add('d-none');
       
     });
+
+    const deleteEnvironmentButton = document.getElementById('deleteEnvironmentButton');
+const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+
+deleteEnvironmentButton.addEventListener('click', () => {
+  const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
+  deleteConfirmationModal.classList.add('show');
+  deleteConfirmationModal.style.display = 'block';
+});
+
+confirmDeleteButton.addEventListener('click', async () => {
+  const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
+  deleteConfirmationModal.style.display = 'none';
+
+  showLoadingSpinner();
+  
+  const response = await fetch('/api/environment/destroy', {
+    method: 'DELETE'
+  });
+
+  const data = await response.json();
+  console.log(data);
+
+  // Recargar la página para refrescar el canvas
+  location.reload();
+  hideLoadingSpinner();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const modalDismissButtons = document.querySelectorAll('[data-dismiss="modal"]');
+  modalDismissButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const modal = button.closest('.modal');
+      modal.style.display = 'none';
+    });
+  });
+});
+
+
   </script>
 </body>
 </html>

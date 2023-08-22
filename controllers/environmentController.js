@@ -69,50 +69,58 @@ async function deleteEnvironmentById(req, res) {
 // Función para generar el entorno inicial
 async function createEnvironment(eMode, environmentType) {
   try {
-     // Desactivar todos los entornos anteriores
-    await Environment.updateMany({}, { isActive: false });
 
-    // Crea el entorno utilizando el modelo Environment
-    let antCostRange = getDificultyRange(eMode);
+     // Verificar si ya existe un entorno activo
+     const activeEnvironment = await Environment.findOne({ isActive: true });
+
+     if (!activeEnvironment) {
+      // Desactivar todos los entornos anteriores
+      await Environment.updateMany({}, { isActive: false });
+
+      // Crea el entorno utilizando el modelo Environment
+      let antCostRange = getDificultyRange(eMode);
+      
+      const environmentData = new Environment({
+        mode: eMode ? eMode : 'medium',
+        antCost: getRandomInt(antCostRange.min,antCostRange.max), 
+        environmentType: environmentType ? environmentType : 'jungle',
+        isActive: true
+      });
+
+      // Guarda el entorno en la base de datos
+      const savedEnvironment = await environmentData.save();
+
+      console.log("🌱🐜🌱🍎🪲🦗 Entorno generado con éxito 🌱🐜🌱🍎🪲🦗");
+
+
+      // Crea objetos de comida y enemigos usando el _id del entorno
+      const allEnemies = await createFood(eMode, savedEnvironment._id)
+      const allFoods = await createEnemy(eMode, savedEnvironment._id)
+
+      // Crear un solo array con todos los datos de alimentos y enemigos
+      const allData = [...allEnemies, ...allFoods];
+
+      // Crear un array aleatorio mezclado de objetos de alimentos y enemigos
+      const mixedData = [];
+      while (allData.length > 0) {
+        const randomIndex = getRandomObjectFromArray(allData);
+        mixedData.push(allData[randomIndex]);
+        allData.splice(randomIndex, 1);
+      }
+
+      // Actualiza el entorno con los IDs de los objetos de comida y enemigos
+      const result = await Environment.findByIdAndUpdate(savedEnvironment._id, {
+        data: mixedData
+      }, { new: true });
+
+      console.log("🌱🐜🌱🍎🪲🦗 Entorno actualizado con objetos de comida y enemigos 🌱🐜🌱🍎🪲🦗");
+
+      return result; // Retorna el entorno guardado con relaciones
+
+     }else {
+      console.log("🌱🐜🌱🍎🪲🦗 Ya existe un entorno activo 🌱🐜🌱🍎🪲🦗");
+     }
     
-    const environmentData = new Environment({
-      mode: eMode ? eMode : 'medium',
-      antCost: getRandomInt(antCostRange.min,antCostRange.max), 
-      environmentType: environmentType ? environmentType : 'jungle',
-      isActive: true
-    });
-
-    // Guarda el entorno en la base de datos
-    const savedEnvironment = await environmentData.save();
-
-    console.log("🌱🐜🌱🍎🪲🦗 Entorno generado con éxito 🌱🐜🌱🍎🪲🦗");
-
-
-    // Crea objetos de comida y enemigos usando el _id del entorno
-    const allEnemies = await createFood(eMode, savedEnvironment._id)
-    const allFoods = await createEnemy(eMode, savedEnvironment._id)
-
-    // Crear un solo array con todos los datos de alimentos y enemigos
-    const allData = [...allEnemies, ...allFoods];
-
-    // Crear un array aleatorio mezclado de objetos de alimentos y enemigos
-    const mixedData = [];
-    while (allData.length > 0) {
-      const randomIndex = getRandomObjectFromArray(allData);
-      mixedData.push(allData[randomIndex]);
-      allData.splice(randomIndex, 1);
-    }
-
-
-
-    // Actualiza el entorno con los IDs de los objetos de comida y enemigos
-    const result = await Environment.findByIdAndUpdate(savedEnvironment._id, {
-      data: mixedData
-    }, { new: true });
-
-    console.log("🌱🐜🌱🍎🪲🦗 Entorno actualizado con objetos de comida y enemigos 🌱🐜🌱🍎🪲🦗");
-
-    return result; // Retorna el entorno guardado con relaciones
   } catch (error) {
     console.error("Error al generar el entorno:", error);
   }
@@ -188,6 +196,7 @@ async function getUnassignedEnvironment(req, res) {
     }
   
 
+    req.io.emit('update', { message: resultUpdated });
     return res.status(200).json(resultUpdated);
   } catch (error) {
     return res.status(500).json({ error: 'Error al obtener y marcar el objeto como asignado. ' + error });
@@ -249,7 +258,7 @@ async function updateAssignedObjects(req, res) {
       name: result.name,
       state: result.type === 'food' ? 'collected' : 'defeated'
     };
-
+    req.io.emit('update', { message: resultUpdated });
     return res.status(200).json(resultUpdated);
   } catch (error) {
     return res.status(500).json({ error: 'Error al obtener y marcar el objeto como asignado. ' + error });

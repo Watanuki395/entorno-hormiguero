@@ -28,7 +28,7 @@ function generateEnemies(eMode, environmentId) {
     type: insect.type,
     name: insect.name,
     antsRequired: getRandomInt(antsRequired.min, antsRequired.max),
-    timeRequired: getRandomInt(5000, 15000),
+    timeRequired: getRandomInt(5000, 25000),
     completed: false,
     assigned: false,
     enviroment: environmentId
