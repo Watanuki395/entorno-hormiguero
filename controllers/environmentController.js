@@ -27,8 +27,12 @@ async function setNewEnvironment(req, res) {
 
     // Crea el entorno primero
     const newEnvironment = await createEnvironment(eMode, environmentType);
+    if(!newEnvironment){
+      res.json({ status: 200, created: false, message: `No se puede crear un nuevo entorno si ya existe un entorno ACTIVO, por favor desactivar el entorno activo antes de continuar` });
+    }else{
+      res.json({ status: 200, created: true, message: `Nuevo entorno creado con éxito en modo: ${eMode}`, environment: newEnvironment });
+    }
 
-    res.json({ status: 200, message: `Nuevo entorno creado con éxito en modo: ${eMode}`, environment: newEnvironment });
   } catch (e) {
     res.json({ status: 404, message: "Error 🐜🐜🐜🐜" });
   }
@@ -119,6 +123,7 @@ async function createEnvironment(eMode, environmentType) {
 
      }else {
       console.log("🌱🐜🌱🍎🪲🦗 Ya existe un entorno activo 🌱🐜🌱🍎🪲🦗");
+      return false
      }
     
   } catch (error) {
@@ -265,6 +270,26 @@ async function updateAssignedObjects(req, res) {
   }
 }
 
+async function deactivateLastActiveEnvironment(req, res) {
+  try {
+    // Buscar el último entorno activo
+    const lastActiveEnvironment = await Environment.findOne({ isActive: true })
+      .sort({ createdAt: -1 }) // Ordenar por fecha de creación en orden descendente
+      .exec();
 
+    if (lastActiveEnvironment) {
+      // Desactivar el entorno activo
+      lastActiveEnvironment.isActive = false;
+      await lastActiveEnvironment.save();
 
-module.exports = { getFullEnvironment, setNewEnvironment, createEnvironment, getAntCost, getUnassignedEnvironment, updateAssignedObjects, deleteEnvironmentById };
+      return res.status(200).json({ message: 'Último entorno activo desactivado con éxito' });
+    } else {
+      return res.status(404).json({ message: 'No se encontró ningún entorno activo' });
+    }
+  } catch (error) {
+    console.error('Error al desactivar el último entorno activo:', error);
+    return res.status(500).json({ message: 'Error al desactivar el último entorno activo' });
+  }
+}
+
+module.exports = { getFullEnvironment, setNewEnvironment, createEnvironment, getAntCost, getUnassignedEnvironment, updateAssignedObjects, deleteEnvironmentById, deactivateLastActiveEnvironment };

@@ -142,21 +142,22 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirmación de Borrado</h5>
+        <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirmación de desactivación</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        ¿Estás seguro de que quieres borrar el entorno activo?
+        ¿Estás seguro de que quieres desactivar la partida de este entorno?
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-danger" id="confirmDeleteButton">Borrar</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Regresar</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteButton">Desactivar</button>
       </div>
     </div>
   </div>
 </div>
+<div id="alertContainer" class="alert-container"></div>
   <!-- Agregar referencia a P5.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <!-- Agregar referencia a Bootstrap -->
@@ -164,9 +165,56 @@
   <!-- Agregamos socked.io-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
   <script>
-    const socket = io("http://ec2-52-200-81-149.compute-1.amazonaws.com/"); 
+    const socket = io("http://localhost:8080/"); 
 
-    let environmentData;
+    class Ant {
+        constructor(x, y) {
+          this.x = x;
+          this.y = y;
+          this.speedX = random(-1, 1);
+          this.speedY = random(-1, 1);
+          this.color = color(130, 0, 0);
+        }
+
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+
+          if (this.x < 0 || this.x > width) {
+            this.speedX *= -1;
+          }
+
+          if (this.y < 0 || this.y > height) {
+            this.speedY *= -1;
+          }
+        }
+
+        display() {
+          // Cuerpo de la hormiga
+            fill(this.color); 
+            ellipse(this.x, this.y, 10, 10); // Cuerpo redondeado
+
+            // Cabeza de la hormiga
+            ellipse(this.x + 5, this.y - 5, 6, 6); // Cabeza redondeada
+
+            // Patas de la hormiga
+            stroke(0); // Color negro para las patas
+            line(this.x - 2, this.y + 2, this.x - 5, this.y + 5); // Pata izquierda delantera
+            line(this.x + 2, this.y + 2, this.x + 5, this.y + 5); // Pata derecha delantera
+            line(this.x - 2, this.y + 5, this.x - 5, this.y + 8); // Pata izquierda trasera
+            line(this.x + 2, this.y + 5, this.x + 5, this.y + 8); // Pata derecha trasera
+
+            // Ojos de la hormiga
+            fill(255); // Color blanco
+            ellipse(this.x + 3, this.y - 7, 2, 2); // Ojo derecho
+            ellipse(this.x + 6, this.y - 7, 2, 2); // Ojo izquierdo
+        }
+      }
+      
+      let environmentData;
+      let environmentType;
+      let ants = [];
+
       function showLoadingSpinner() {
         loadingSpinner.classList.remove('d-none');
       }
@@ -178,14 +226,23 @@
 
       function setup() {
         createCanvas(1000, 600);
+
+         // Inicializa un grupo de hormigas
+          for (let i = 0; i < 20; i++) {
+            ants.push(new Ant(random(width), random(height)));
+          }
         //fetchEnvironmentData();
-        noLoop(); // Evita que draw se ejecute automáticamente
+        //noLoop(); // Evita que draw se ejecute automáticamente
         showLoadingSpinner(); // Muestra el spinner de carga
 
         // Carga los datos del entorno y luego dibuja el canvas
         fetchEnvironmentData().then(() => {
           hideLoadingSpinner(); // Oculta el spinner de carga
-          redraw(); // Vuelve a dibujar el canvas con los datos cargados
+          //redraw(); // Vuelve a dibujar el canvas con los datos cargados
+        }).catch((error)=>{
+          console.log(`No existe un entorno activo: ${error}`);
+          hideLoadingSpinner(); // Oculta el spinner de carga
+          //redraw(); // Vuelve a dibujar el canvas con los datos cargados
         });
 
       }
@@ -193,30 +250,42 @@
       async function fetchEnvironmentData() {
         const response = await fetch('/api/environment/full');
         const data = await response.json();
-        environmentData = data.environment.data;
-        environmentType = data.environment.environmentType;
+        if(data){
+          environmentData = data.environment.data;
+          environmentType = data.environment.environmentType;
+        }
       }
 
       function draw() {
-          background(220);
+        background(220);
+        if (!environmentData) {
+          for (let ant of ants) {
+            ant.update();
+            ant.display();
+          }
+        } else {
+          drawEnvironment();
+        }
+      }
 
-          if (environmentData) {
+      function drawEnvironment() {
           const rows = 3; // Number of rows
           const cols = Math.ceil(environmentData.length / rows); // Number of columns
 
           const elementSize = 40;
-          const paddingX = (width - cols * elementSize) / (cols - 1 );
+          const paddingX = (width - cols * elementSize) / (cols - 1);
           const paddingY = (height - rows * elementSize) / (rows + 1);
 
           let index = 0;
+
           // Set canvas background color based on environmentType
           if (environmentType === 'jungle') {
-                background(97, 194, 86); // Green color for jungle environment
-              } else if (environmentType === 'desert') {
-                background(255, 228, 181); // Peach color for desert environment
-              } else if( environmentType === 'snow'){
-                background(220); // Default background color
-              }
+            background(97, 194, 86); // Green color for jungle environment
+          } else if (environmentType === 'desert') {
+            background(255, 228, 181); // Peach color for desert environment
+          } else if (environmentType === 'snow') {
+            background(220); // Default background color
+          }
 
           for (let row = 0; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
@@ -229,7 +298,6 @@
             }
           }
         }
-      }
 
       function drawElement(x, y, element) {
             fill(255);
@@ -243,7 +311,7 @@
 
             ellipse(x, y, 40, 40); // Draw a simple circle for each element
             textAlign(CENTER, CENTER);
-            fill(130,0,0);
+            fill(0);
             text(element.name, x, y + 30); // Display the name below the circle
         }
     
@@ -258,15 +326,36 @@
   <script>
     const createEnvironmentForm = document.getElementById('createEnvironmentForm');
     const createEnvironmentButton = document.getElementById('createEnvironmentButton');
-    const loadingSpinner = document.getElementById('loadingSpinner');
-
+    const alertContainer = document.getElementById('alertContainer');
+    
     createEnvironmentButton.addEventListener('click', async (event) => {
       event.preventDefault();
       const eMode = createEnvironmentForm.elements.eMode.value;
       const environmentType = createEnvironmentForm.elements.environmentType.value;
 
+
+        // Validar si se seleccionaron opciones
+        if (!eMode || !environmentType) {
+          const alertHTML = `
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                Por favor, selecciona las opciones de configuración del entorno.
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" id="closeAlert">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            `;
+            alertContainer.innerHTML = alertHTML;
+
+            const closeAlertButton = document.getElementById('closeAlert');
+              closeAlertButton.addEventListener('click', () => {
+                alertContainer.innerHTML = ''; 
+              });
+            
+          return;
+        }
+
         // Mostrar el spinner de carga
-      loadingSpinner.classList.remove('d-none');
+        showLoadingSpinner();
       const response = await fetch('/api/environment/new', {
         method: 'POST',
         headers: {
@@ -276,23 +365,42 @@
       });
 
       const data = await response.json();
-      console.log(data);
+      //console.log(data);
 
       // Recargar la página para refrescar el canvas
-      location.reload();
+      if(data.created){
+        location.reload();
+      }else{
+        const alertHTML = `
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                ${data.message}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" id="closeAlert">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            `;
+            alertContainer.innerHTML = alertHTML;
+
+            const closeAlertButton = document.getElementById('closeAlert');
+              closeAlertButton.addEventListener('click', () => {
+                alertContainer.innerHTML = ''; 
+              });
+            
+      }
+
       // Ocultar el spinner de carga
-      loadingSpinner.classList.add('d-none');
+      hideLoadingSpinner();
       
     });
 
     const deleteEnvironmentButton = document.getElementById('deleteEnvironmentButton');
-const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+    const confirmDeleteButton = document.getElementById('confirmDeleteButton');
 
-deleteEnvironmentButton.addEventListener('click', () => {
-  const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
-  deleteConfirmationModal.classList.add('show');
-  deleteConfirmationModal.style.display = 'block';
-});
+    deleteEnvironmentButton.addEventListener('click', () => {
+      const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
+      deleteConfirmationModal.classList.add('show');
+      deleteConfirmationModal.style.display = 'block';
+    });
 
 confirmDeleteButton.addEventListener('click', async () => {
   const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
@@ -300,8 +408,8 @@ confirmDeleteButton.addEventListener('click', async () => {
 
   showLoadingSpinner();
   
-  const response = await fetch('/api/environment/destroy', {
-    method: 'DELETE'
+  const response = await fetch('/api/environment/deactivate-environment', {
+    method: 'PUT'
   });
 
   const data = await response.json();

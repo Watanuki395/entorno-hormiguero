@@ -3,7 +3,7 @@ const router = express.Router()
 // const checkOrigin = require('../middleware/origin')
 //const checkAuth = require('../middleware/auth')
 // const checkRoleAuth = require('../middleware/roleAuth')
-const { getFullEnvironment, getAntCost, getUnassignedEnvironment, setNewEnvironment, updateAssignedObjects, deleteEnvironmentById } = require('../controllers/environmentController')
+const { getFullEnvironment, getAntCost, getUnassignedEnvironment, setNewEnvironment, updateAssignedObjects, deleteEnvironmentById, deactivateLastActiveEnvironment } = require('../controllers/environmentController')
 
 /**
  * @swagger
@@ -231,7 +231,6 @@ router.get('/ant-cost', getAntCost )
 router.patch('/update-task', updateAssignedObjects);
 
 
-
 /**
  * @swagger
  * /api/environment/update-task:
@@ -316,7 +315,7 @@ router.put('/update-task', updateAssignedObjects);
  *         description: Error al crear el entorno.
  */
 
-router.post('/new', setNewEnvironment )
+router.post('/new', setNewEnvironment );
 
 /**
  * @swagger
@@ -345,9 +344,24 @@ router.post('/new', setNewEnvironment )
  *         description: Error al eliminar el entorno.
  */
 
-router.delete('/destroy', deleteEnvironmentById )
+router.delete('/destroy', deleteEnvironmentById);
 
+/**
+ * @swagger
+ * /api/environment/deactivate-environment:
+ *   put:
+ *     summary: Desactiva el ultimo entorno activo
+ *     tags: [Entorno]
+ *     responses:
+ *       200:
+ *         description: OK. Entorno eliminado con éxito.
+ *       404:
+ *         description: Entorno no encontrado
+ *       500:
+ *         description: Error al eliminar el entorno.
+ */
 
+router.put('/deactivate-environment', deactivateLastActiveEnvironment);
 
 
 
