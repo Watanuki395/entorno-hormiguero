@@ -6,6 +6,10 @@ const { createEnemy } = require("./enemyController");
 const { createFood } = require("./foodController");
 const { getRandomObjectFromArray, getRandomInt, getDificultyRange } = require("../helpers/helpers");
 
+
+let nextTaskEndpointCalls = 0
+let incompleteTaskCount = 0
+
 const getFullEnvironment = async (req, res) => {
   try {
     // Encuentra el entorno activo (isActive: true) 
@@ -30,6 +34,7 @@ async function setNewEnvironment(req, res) {
     if(!newEnvironment){
       res.json({ status: 200, created: false, message: `No se puede crear un nuevo entorno si ya existe un entorno ACTIVO, por favor desactivar el entorno activo antes de continuar` });
     }else{
+      nextTaskEndpointCalls = 0
       res.json({ status: 200, created: true, message: `Nuevo entorno creado con éxito en modo: ${eMode}`, environment: newEnvironment });
     }
 
@@ -150,29 +155,113 @@ async function getAntCost(req, res){
 async function getUnassignedEnvironment(req, res) {
   try {
     // Encuentra el primer documento que contenga al menos un objeto con assigned=false
-    const environmentWithUnassigned = await Environment.findOne({  isActive: true, 'data.assigned': false });
+    const environmentWithUnassigned = await Environment.findOne({
+      isActive: true,
+      "data.assigned": false,
+    });
 
     if (!environmentWithUnassigned) {
-      return res.status(404).json({ message: 'No hay objetos sin asignar disponibles.' });
+      const incompleteTask = await Environment.findOne({
+        isActive: true,
+        "data.completed": false,
+      });
+
+      if (!incompleteTask) {
+        // Buscar el último entorno activo
+        const lastActiveEnvironment = await Environment.findOne({
+          isActive: true,
+        })
+          .sort({ createdAt: -1 }) // Ordenar por fecha de creación en orden descendente
+          .exec();
+
+        if (lastActiveEnvironment) {
+          // Desactivar el entorno activo
+          lastActiveEnvironment.isActive = false;
+          await lastActiveEnvironment.save();
+        }
+
+        // Creamos un entorno nuevo
+        createEnvironment();
+        return res.status(404).json({
+          message:
+            "No quedan enemigos ni comidas en este entorno, todas las tareas finalizaron con exito, se creara un nuevo entorno",
+          envState: "completed",
+        });
+      }
+
+      ///*En caso de que se asignen los objetos del entorno pero no se completen */
+      const incompleteTasks = incompleteTask.data.filter(
+        (item) => !item.completed
+      );
+
+      if (nextTaskEndpointCalls === 0) {
+        nextTaskEndpointCalls++;
+        incompleteTaskCount = incompleteTasks.length;
+        return res.status(404).json({
+          message:
+            `No quedan enemigos ni comidas por asignar, pero hay ${incompleteTasks.length} de las tareas asignadas que no se han completado. El entorno se desactivara si ninguna las tareas no se completan antes de la proxima llamada de comunicacion`,
+        });
+      }
+
+      /* En caso de que sea la segunda llamada de comunicacion y ningun objeto se completara */
+      if (
+        nextTaskEndpointCalls > 0 &&
+        incompleteTasks.length === incompleteTaskCount
+      ) {
+        // Buscar el último entorno activo
+        const lastActiveEnvironment = await Environment.findOne({
+          isActive: true,
+        })
+          .sort({ createdAt: -1 }) // Ordenar por fecha de creación en orden descendente
+          .exec();
+
+        if (lastActiveEnvironment) {
+          // Desactivar el entorno activo
+          lastActiveEnvironment.isActive = false;
+          await lastActiveEnvironment.save();
+        }
+
+        // Creamos un entorno nuevo
+        createEnvironment();
+        nextTaskEndpointCalls = 0
+
+        return res.status(404).json({
+          message:
+            "No se completo ninguna tarea desde la ultima revision, se procede a desactivar el entorno",
+        });
+
+      }else if(
+        nextTaskEndpointCalls > 0 &&
+        incompleteTasks.length < incompleteTaskCount){
+          return res.status(404).json({
+            message:
+              `No quedan enemigos ni comidas por asignar, pero todavia quedan ${incompleteTasks.length} de las tareas asignadas que no se han completado. El entorno se desactivara si ninguna las tareas no se completan antes de la proxima llamada de comunicacion`,
+          });
+        }
+
+        ///just in case
+      return null;
     }
 
     // Encuentra el primer objeto dentro de 'data' que tiene assigned=false
-    const unassignedObject = environmentWithUnassigned.data.find(obj => !obj.assigned);
+    const unassignedObject = environmentWithUnassigned.data.find(
+      (obj) => !obj.assigned
+    );
 
     // Actualiza el objeto encontrado dentro del documento
     await Environment.updateOne(
-      { _id: environmentWithUnassigned._id, 'data._id': unassignedObject._id },
-      { $set: { 'data.$.assigned': true } }
+      { _id: environmentWithUnassigned._id, "data._id": unassignedObject._id },
+      { $set: { "data.$.assigned": true } }
     );
 
-    let result = {}
-    if (unassignedObject.type === 'food') {
+    let result = {};
+    if (unassignedObject.type === "food") {
       result = await Food.findByIdAndUpdate(
         unassignedObject._id,
         { $set: { assigned: true } },
         { new: true }
       );
-    } else if (unassignedObject.type === 'enemy') {
+    } else if (unassignedObject.type === "enemy") {
       result = await Enemy.findByIdAndUpdate(
         unassignedObject._id,
         { $set: { assigned: true } },
@@ -180,31 +269,32 @@ async function getUnassignedEnvironment(req, res) {
       );
     }
 
-    let resultUpdated = {}
-    if( result.type === 'food' ){
+    let resultUpdated = {};
+    if (result.type === "food") {
       resultUpdated = {
         _id: result._id,
         type: result.type,
         name: result.name,
         antsRequired: result.antsRequired,
         timeRequired: result.timeRequired,
-        foodValue: result.foodValue
-      }
-    } else if(result.type === 'enemy' ){
+        foodValue: result.foodValue,
+      };
+    } else if (result.type === "enemy") {
       resultUpdated = {
         _id: result._id,
         type: result.type,
         name: result.name,
         antsRequired: result.antsRequired,
-        timeRequired: result.timeRequired
-      }
+        timeRequired: result.timeRequired,
+      };
     }
-  
 
-    req.io.emit('update', { message: resultUpdated });
+    req.io.emit("update", { message: resultUpdated });
     return res.status(200).json(resultUpdated);
   } catch (error) {
-    return res.status(500).json({ error: 'Error al obtener y marcar el objeto como asignado. ' + error });
+    return res.status(500).json({
+      error: "Error al obtener y marcar el objeto como asignado. " + error,
+    });
   }
 }
 

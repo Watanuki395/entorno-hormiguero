@@ -225,7 +225,7 @@
       }
 
       function setup() {
-        createCanvas(1000, 600);
+        createCanvas(1200, 600);
 
          // Inicializa un grupo de hormigas
           for (let i = 0; i < 20; i++) {
@@ -273,7 +273,7 @@
           const cols = Math.ceil(environmentData.length / rows); // Number of columns
 
           const elementSize = 40;
-          const paddingX = (width - cols * elementSize) / (cols - 1);
+          const paddingX = (width - cols * elementSize) / (cols + 1);
           const paddingY = (height - rows * elementSize) / (rows + 1);
 
           let index = 0;
